@@ -145,7 +145,7 @@ void loadData() {
 int main() {
     loadData();
     cout << "========================================" << endl;
-    cout << "     Library Management System" << endl;
+    cout << "     Library Management System v1.0" << endl;
     cout << "========================================" << endl;
 
     int choice;
