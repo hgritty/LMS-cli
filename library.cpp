@@ -19,7 +19,48 @@ struct Book {
 vector<Book> books;   // 存放所有书的容器
 int nextId = 1;       // 下一本书的编号
 
-void addBook();
+/**
+ * 添加一本新书到系统
+ * 用户输入书名和作者，系统自动分配编号
+ * 新书默认状态为"在库"（未被借出）
+ */
+void addBook() {
+    // 1. 创建一个临时的 Book 对象，用来存放用户输入的数据
+    Book newBook;
+    
+    // 2. 自动分配编号
+    //    nextId 是全局变量，记录"下一本书应该用哪个编号"
+    //    先把 nextId 赋给新书，然后 nextId 自增 1，为下一本书做准备
+    newBook.id = nextId;
+    nextId = nextId + 1;
+    
+    // 3. 提示用户输入书名
+    cout << "Enter book title: ";
+    // 4. 清除输入缓冲区里残留的换行符
+    //    原因：在 main() 里用了 cin >> choice，用户按回车后，缓冲区里还留着 '\n'
+    //    如果不清除，下面的 getline 会直接读到 '\n'，跳过书名输入
+    cin.ignore();
+    // 5. 读取用户输入的书名（允许包含空格，如 "The C++ Programming Language"）
+    getline(cin, newBook.title);
+    
+    // 6. 提示用户输入作者
+    cout << "Enter book author: ";
+    // 7. 读取作者名（允许包含空格，如 "J. R. R. Tolkien"）
+    //    注意：这里不需要再 cin.ignore()，因为上一步的 getline 已经把换行符吃掉了
+    getline(cin, newBook.author);
+    
+    // 8. 新书默认状态：未被借出（在库）
+    newBook.borrowed = false;
+    
+    // 9. 把这本书存入书架（books 容器）
+    //    push_back 是 vector 的方法，把元素添加到末尾
+    books.push_back(newBook);
+    
+    // 10. 提示用户添加成功，并显示自动分配的编号
+    //     用户记住这个编号，后续借阅/归还时需要用到
+    cout << "Book added successfully! ID: " << newBook.id << endl;
+}
+
 void borrowBook();
 void returnBook();
 void listBooks();
