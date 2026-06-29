@@ -61,9 +61,34 @@ void addBook() {
     cout << "Book added successfully! ID: " << newBook.id << endl;
 }
 
-void borrowBook();
-void returnBook();
-void listBooks();
+void borrowBook() {
+    // TODO: 实现借阅功能
+}
+void returnBook() {
+    // TODO: 实现归还功能
+}
+
+void listBooks() {
+    // 1. 检查书架是否为空
+    if (books.empty()) {
+        cout << "Sorry, there is no book here." << endl;
+    } else {
+        // 2. 输出表格头
+        cout << "+----+---------------------+---------------------+----------+" << endl;
+        cout << "| ID | Title               | Author              | Status   |" << endl;
+        cout << "+----+---------------------+---------------------+----------+" << endl;
+        
+        // 3. 遍历所有书，逐行输出
+        for (const Book& b : books) {
+            string status = b.borrowed ? "Borrowed" : "Available";
+            cout << "| " << b.id << " | " << b.title << " | " << b.author << " | " << status << " |" << endl;
+        }
+        
+        // 4. 输出表格底
+        cout << "+----+---------------------+---------------------+----------+" << endl;
+    }
+}
+
 void saveData();
 void loadData();
 
@@ -86,9 +111,9 @@ int main() {
         cin >> choice;
 
         if (choice == 1) {
-            // 调用 addBook()
+            addBook();
         } else if (choice == 2) {
-            // 调用 listBooks()
+            listBooks();
         } else if (choice == 3) {
             // 调用 borrowBook()
         } else if (choice == 4) {
