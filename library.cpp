@@ -5,6 +5,9 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <fstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -19,11 +22,7 @@ struct Book {
 vector<Book> books;   // 存放所有书的容器
 int nextId = 1;       // 下一本书的编号
 
-/**
- * 添加一本新书到系统
- * 用户输入书名和作者，系统自动分配编号
- * 新书默认状态为"在库"（未被借出）
- */
+
 void addBook() {
     // 1. 创建一个临时的 Book 对象，用来存放用户输入的数据
     Book newBook;
@@ -69,30 +68,82 @@ void returnBook() {
 }
 
 void listBooks() {
-    // 1. 检查书架是否为空
     if (books.empty()) {
         cout << "Sorry, there is no book here." << endl;
     } else {
-        // 2. 输出表格头
+        // 设置对齐方式
+        cout << left;  // 左对齐
+        
+        // 表头
         cout << "+----+---------------------+---------------------+----------+" << endl;
         cout << "| ID | Title               | Author              | Status   |" << endl;
         cout << "+----+---------------------+---------------------+----------+" << endl;
         
-        // 3. 遍历所有书，逐行输出
+        // 数据行
         for (const Book& b : books) {
             string status = b.borrowed ? "Borrowed" : "Available";
-            cout << "| " << b.id << " | " << b.title << " | " << b.author << " | " << status << " |" << endl;
+            
+            cout << "| ";
+            cout << setw(2) << b.id << " | ";
+            cout << setw(19) << b.title << " | ";
+            cout << setw(19) << b.author << " | ";
+            cout << setw(8) << status << " |" << endl;
         }
         
-        // 4. 输出表格底
         cout << "+----+---------------------+---------------------+----------+" << endl;
     }
 }
 
-void saveData();
-void loadData();
+void saveData() {
+    // 1. 打开文件（ofstream）
+    ofstream file("books.txt");
+    
+    // 2. 遍历 books 容器，每本书写一行
+    for (const Book& b : books) {
+        // 把 int 转成 string，然后拼接
+        string content = to_string(b.id) + "|" + b.title + "|" + b.author + "|" + to_string(b.borrowed);
+        file << content << endl;
+    }
+    
+    // 文件会在函数结束时自动关闭
+}
+
+void loadData() {
+    ifstream file("books.txt");
+    if (!file) return;  // 文件不存在就退出
+    
+    string line;
+    while (getline(file, line)) {
+        // 用 stringstream 分割字符串
+        stringstream ss(line);
+        string idStr, title, author, statusStr;
+        
+        getline(ss, idStr, '|');
+        getline(ss, title, '|');
+        getline(ss, author, '|');
+        getline(ss, statusStr, '|');
+        
+        // 转换成对应类型
+        int id = stoi(idStr);
+        bool borrowed = stoi(statusStr);  // "0" → false, "1" → true
+        
+        // 创建 Book 对象并加入容器
+        Book b;
+        b.id = id;
+        b.title = title;
+        b.author = author;
+        b.borrowed = borrowed;
+        books.push_back(b);
+        
+        // 更新 nextId（保证编号不重复）
+        if (id >= nextId) {
+            nextId = id + 1;
+        }
+    }
+}
 
 int main() {
+    loadData();
     cout << "========================================" << endl;
     cout << "     Library Management System" << endl;
     cout << "========================================" << endl;
@@ -101,12 +152,12 @@ int main() {
 
     while(true) {
         cout << "\nMenu:" << endl;
-        cout << " 1. Add a book" << endl;
-        cout << " 2. List all books" << endl;
-        cout << " 3. Borrow a book" << endl;
-        cout << " 4. Return a book" << endl;
-        cout << " 5. Exit" << endl;
-        cout << " Enter your choice(1-5)";
+        cout << "1. Add a book" << endl;
+        cout << "2. List all books" << endl;
+        cout << "3. Borrow a book" << endl;
+        cout << "4. Return a book" << endl;
+        cout << "5. Exit" << endl;
+        cout << "Enter your choice(1-5)";
 
         cin >> choice;
 
@@ -119,6 +170,7 @@ int main() {
         } else if (choice == 4) {
             // 调用 returnBook()
         } else if (choice == 5) {
+            saveData();  // 退出前保存数据
             cout << "Goodbye!" << endl;
             break;
         } else {
