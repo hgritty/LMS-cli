@@ -61,10 +61,58 @@ void addBook() {
 }
 
 void borrowBook() {
-    // TODO: 实现借阅功能
+    int id;
+    cout << "Enter book ID to borrow: ";
+    cin >> id;
+
+    if (id < 1 || id >= nextId) {  // 检查是否在合理范围
+        cout << "Out of Index!" << endl;
+        return;
+    }
+
+    // 遍历查找
+    for (Book& b : books) {
+        if (b.id == id) {
+            if (b.borrowed == false) {
+                b.borrowed = true;
+                cout << "Book borrowed successfully!" << endl;
+            } else {
+                cout << "Book is already borrowed!" << endl;
+            }
+            return;
+        }
+    }
+
+    // 循环结束还没找到（可能编号不连续了,该号码的书已经被删除）
+    cout << "Book not found!" << endl;
 }
+
 void returnBook() {
-    // TODO: 实现归还功能
+    int id;
+    cout << "Enter book ID to return: ";
+    cin >> id;
+
+    // 快速边界检查（和 borrowBook 保持一致）
+    if (id < 1 || id >= nextId) {
+        cout << "Out of Index!" << endl;
+        return;
+    }
+
+    // 遍历查找
+    for (Book& b : books) {
+        if (b.id == id) {
+            if (b.borrowed == true) {
+                b.borrowed = false;
+                cout << "Book returned successfully!" << endl;
+            } else {
+                cout << "Book is already available (not borrowed)!" << endl;
+            }
+            return;
+        }
+    }
+
+    // 循环结束还没找到
+    cout << "Book not found!" << endl;
 }
 
 void listBooks() {
@@ -166,9 +214,9 @@ int main() {
         } else if (choice == 2) {
             listBooks();
         } else if (choice == 3) {
-            // 调用 borrowBook()
+            borrowBook();
         } else if (choice == 4) {
-            // 调用 returnBook()
+            returnBook();
         } else if (choice == 5) {
             saveData();  // 退出前保存数据
             cout << "Goodbye!" << endl;
