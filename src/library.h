@@ -19,6 +19,7 @@ public:
     bool returnBook(int id);
     bool saveToFile(const std::string& filename)  const;
     bool loadFromFile(const std::string& filename);
+    bool deleteBook(int id);
 };
 
 #endif

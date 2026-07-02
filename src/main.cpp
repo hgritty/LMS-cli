@@ -22,8 +22,9 @@ int main() {
         cout << "2. List all books" << endl;
         cout << "3. Borrow a book" << endl;
         cout << "4. Return a book" << endl;
-        cout << "5. Exit" << endl;
-        cout << "Enter your choice(1-5): ";
+        cout << "5. Delete a book\n"; 
+        cout << "6. Exit" << endl;
+        cout << "Enter your choice(1-6): ";
         
         //只读取数字1，会把\n留在缓冲区里，所以下面需要先ignore
         cin >> choice;
@@ -52,8 +53,13 @@ int main() {
             cin >> id;
             cin.ignore();
             library.returnBook(id);
-
         } else if (choice == 5) {
+            int id;
+            cout << "Enter book ID to delete: ";
+            cin >> id;
+            cin.ignore();
+            library.deleteBook(id);
+        } else if (choice == 6) {
             library.saveToFile(filename);
             cout << "Goodbye!" << endl;
             break;

@@ -108,10 +108,37 @@ bool Library::returnBook(int id) {
     return false;
 }
 
+// 删除图书
+bool Library::deleteBook(int id) {
+    // 边界检查
+    if (id < 1 || id >= nextId) {
+        cout << "Out of Index!" << endl;
+        return false;
+    }
+
+    // 遍历查找
+    for (auto it = books.begin(); it != books.end(); ++it) {
+        if (it->id == id) {
+            // 检查是否已借出
+            if (it->borrowed == true) {
+                cout << "Cannot delete: book is currently borrowed!" << endl;
+                return false;
+            }
+            
+            books.erase(it);
+            cout << "Book deleted successfully!" << endl;
+            return true;
+        }
+    }
+
+    cout << "Book not found!" << endl;
+    return false;
+}
+
 // 保存数据到文件
 bool Library::saveToFile(const string& filename) const {
     // 打开文件
-    ofstream file("filename");
+    ofstream file(filename);
     if (!file) {
         cerr << "Error: Cannot open file for writing!" << endl;
         return false;
