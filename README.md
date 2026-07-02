@@ -28,7 +28,7 @@
 | 工具 | 版本 |
 |------|------|
 | C++ 标准 | C++11 |
-| 构建工具 | CMake 3.28.3 |
+| 构建工具 | CMake 3.10+ |
 | 编译器 | GCC / Clang |
 | 操作系统 | Ubuntu 24.04 / WSL2 |
 
@@ -37,10 +37,11 @@
 ## 📁 项目结构
 
 ```
-library/
+LMS-cli/
 ├── src/
-│   ├── book.h          # Book 结构体 + 函数声明
-│   ├── book.cpp        # 函数实现
+│   ├── book.h          # Book 结构体定义
+│   ├── library.h       # Library 类声明
+│   ├── library.cpp     # Library 类实现
 │   └── main.cpp        # 程序入口（菜单 + main）
 ├── build/              # 编译产物（自动生成）
 ├── CMakeLists.txt      # CMake 构建配置
@@ -56,7 +57,7 @@ library/
 
 ```bash
 # 1. 进入项目目录
-cd ~/code/library
+cd ~/code/LMS-cli
 
 # 2. 创建构建目录并编译
 mkdir build && cd build
@@ -64,14 +65,14 @@ cmake ..
 make
 
 # 3. 运行
-./lib
+./lms
 ```
 
 ### 方式二：直接编译
 
 ```bash
-g++ -std=c++11 src/book.cpp src/main.cpp -o lib
-./lib
+g++ -std=c++11 src/library.cpp src/main.cpp -o lms
+./lms
 ```
 
 ---
@@ -131,39 +132,6 @@ rm -rf build
 
 ---
 
-## 🚀 后续计划
-
-- [ ] 删除图书
-- [ ] 按书名/作者搜索
-- [ ] 统计功能
-- [ ] 同一本书多副本支持
-
-
-
----
-
-## ✅ 更新后的 README 特点
-
-| 对比 | 旧版 | 新版 |
-|------|------|------|
-| 项目结构 | ❌ 没有说明 | ✅ 清晰列出 |
-| 编译方式 | ❌ 只有手动编译 | ✅ CMake + 手动两种方式 |
-| 目录说明 | ❌ 没有 | ✅ 说明每个文件的作用 |
-| 数据格式 | ✅ 有 | ✅ 保留并优化 |
-| 使用说明 | ❌ 没有 | ✅ 菜单说明 |
-| 清理命令 | ❌ 没有 | ✅ 添加 |
-
----
-
-提交更新：
-
-```bash
-git add README.md
-git commit -m "docs: 更新 README，适配新的项目结构"
-```
-
----
-
 ## 🔗 远程仓库
 
 | 项目信息 | 说明 |
@@ -185,5 +153,4 @@ refactor: 重构（不改变功能）
 chore: 构建/工具配置
 ```
 
-
-
+---

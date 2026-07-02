@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(src)
 
 # 添加可执行文件
-add_executable(lib
-    src/book.cpp
+add_executable(lms
+    src/library.cpp
     src/main.cpp
 )
