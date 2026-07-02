@@ -1,28 +1,16 @@
-// Library Management System
-// Author : hgritty_wsl
-// Date : 2026-6-30
-
+#include "book.h"
 #include <iostream>
-#include <vector>
-#include <string>
-#include <sstream>
 #include <fstream>
+#include <sstream>
 #include <iomanip>
 
 using namespace std;
 
-struct Book {
-    int id;
-    string title;
-    string author;
-    bool borrowed;
-};
+// 全局变量定义（这里是真正的定义）
+vector<Book> books;
+int nextId = 1;
 
-
-vector<Book> books;   // 存放所有书的容器
-int nextId = 1;       // 下一本书的编号
-
-
+// 所有函数的实现（从原来的 library.cpp 复制过来）
 void addBook() {
     // 1. 创建一个临时的 Book 对象，用来存放用户输入的数据
     Book newBook;
@@ -144,7 +132,7 @@ void listBooks() {
 
 void saveData() {
     // 1. 打开文件（ofstream）
-    ofstream file("books.txt");
+    ofstream file("../books.txt");
     
     // 2. 遍历 books 容器，每本书写一行
     for (const Book& b : books) {
@@ -157,7 +145,7 @@ void saveData() {
 }
 
 void loadData() {
-    ifstream file("books.txt");
+    ifstream file("../books.txt");
     if (!file) return;  // 文件不存在就退出
     
     string line;
@@ -175,7 +163,7 @@ void loadData() {
         int id = stoi(idStr);
         bool borrowed = stoi(statusStr);  // "0" → false, "1" → true
         
-        // 创建 Book 对象并加入容器
+        // 创建临时的 Book 对象并加入容器
         Book b;
         b.id = id;
         b.title = title;
@@ -189,43 +177,3 @@ void loadData() {
         }
     }
 }
-
-int main() {
-    loadData();
-    cout << "========================================" << endl;
-    cout << "     Library Management System v1.0" << endl;
-    cout << "========================================" << endl;
-
-    int choice;
-
-    while(true) {
-        cout << "\nMenu:" << endl;
-        cout << "1. Add a book" << endl;
-        cout << "2. List all books" << endl;
-        cout << "3. Borrow a book" << endl;
-        cout << "4. Return a book" << endl;
-        cout << "5. Exit" << endl;
-        cout << "Enter your choice(1-5)";
-
-        cin >> choice;
-
-        if (choice == 1) {
-            addBook();
-        } else if (choice == 2) {
-            listBooks();
-        } else if (choice == 3) {
-            borrowBook();
-        } else if (choice == 4) {
-            returnBook();
-        } else if (choice == 5) {
-            saveData();  // 退出前保存数据
-            cout << "Goodbye!" << endl;
-            break;
-        } else {
-            cout << "Invalid input! Please enter 1-5." << endl;
-        }
-    }
-
-    return 0;
-}
-
