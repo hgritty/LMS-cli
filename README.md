@@ -138,23 +138,7 @@ rm -rf build
 - [ ] 统计功能
 - [ ] 同一本书多副本支持
 
----
 
-## 📄 许可证
-
-MIT License
-```
-
----
-
-## 🔨 替换你的 README
-
-```bash
-cd ~/code/library
-nano README.md
-```
-
-把上面的内容复制进去，保存退出。
 
 ---
 
@@ -180,4 +164,41 @@ git commit -m "docs: 更新 README，适配新的项目结构"
 
 ---
 
-需要调整任何内容，随时告诉我！😄
+## 🔗 远程仓库
+
+| 项目信息 | 说明 |
+|---------|------|
+| 远程仓库地址 | `git@github.com:hgritty/LMS-cli.git` |
+| 克隆命令 | `git clone git@github.com:hgritty/LMS-cli.git` |
+| HTTPS 地址 | `https://github.com/hgritty/LMS-cli.git` |
+
+### 提交规范
+
+本项目遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+
+```bash
+feat: 添加新功能
+fix: 修复 Bug
+docs: 文档/注释更新
+style: 代码格式调整
+refactor: 重构（不改变功能）
+chore: 构建/工具配置
+
+
+---
+
+## 📄 许可证
+
+MIT License
+```
+
+---
+
+## 🔨 替换你的 README
+
+```bash
+cd ~/code/library
+nano README.md
+```
+
+把上面的内容复制进去，保存退出。
