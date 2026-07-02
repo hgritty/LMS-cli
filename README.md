@@ -6,14 +6,15 @@
 
 ## ✨ 功能列表
 
-<!-- ### 已实现 -->
+### 已实现
 - [x] 添加图书（自动分配编号）
 - [x] 查看所有图书（表格对齐）
 - [x] 借阅图书（按 ID 操作）
 - [x] 归还图书（按 ID 操作）
-- [x] 数据持久化（自动保存/加载）
 - [x] 删除图书
-  <!-- ### 待开发 -->
+- [x] 数据持久化（SQLite 数据库）
+
+### 待开发
 - [ ] 按书名搜索
 - [ ] 按作者搜索
 - [ ] 统计功能（总书数、已借数量）
@@ -29,6 +30,7 @@
 | C++ 标准 | C++11 |
 | 构建工具 | CMake 3.10+ |
 | 编译器 | GCC / Clang |
+| 数据库 | SQLite3 |
 | 操作系统 | Ubuntu 24.04 / WSL2 |
 
 ---
@@ -38,19 +40,21 @@
 ```
 LMS-cli/
 ├── src/
-│   ├── book.h          # Book 结构体定义
 │   ├── library.h       # Library 类声明
-│   ├── library.cpp     # Library 类实现
+│   ├── library.cpp     # Library 类实现（含 SQLite 操作）
 │   └── main.cpp        # 程序入口（菜单 + main）
 ├── build/              # 编译产物（自动生成）
 ├── CMakeLists.txt      # CMake 构建配置
 ├── README.md
+├── library.db          # 书籍信息的数据库
+├── LICENSE
 └── .gitignore
 ```
 
 ---
 
 ## 🔧 编译与运行
+
 
 ### 方式一：使用 CMake（推荐）
 
@@ -70,7 +74,7 @@ make
 ### 方式二：直接编译
 
 ```bash
-g++ -std=c++11 src/library.cpp src/main.cpp -o lms
+g++ -std=c++11 src/library.cpp src/main.cpp -o lms -lsqlite3
 ./lms
 ```
 
@@ -86,25 +90,33 @@ Menu:
 2. List all books  # 查看所有图书
 3. Borrow a book   # 借阅图书（输入 ID）
 4. Return a book   # 归还图书（输入 ID）
-5. Exit            # 退出并保存数据
+5. Delete a book   # 删除图书（输入 ID）
+6. Exit            # 退出程序
 ```
 
 ---
 
 ## 📂 数据存储
 
-数据保存在项目根目录的 `books.txt` 中，格式为：
+数据存储在 SQLite 数据库文件 `library.db` 中，位于项目根目录。
 
-```text
-编号|书名|作者|状态
-1|C++ Primer|Lippman|0
-2|The C Programming Language|Kernighan|1
+表结构：
+
+```sql
+CREATE TABLE books (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    author TEXT NOT NULL,
+    borrowed INTEGER DEFAULT 0
+);
 ```
 
-| 状态 | 含义 |
-|------|------|
-| `0` | 在库（Available） |
-| `1` | 已借出（Borrowed） |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | INTEGER | 自动递增编号 |
+| `title` | TEXT | 书名 |
+| `author` | TEXT | 作者 |
+| `borrowed` | INTEGER | 0=在库，1=已借出 |
 
 ---
 
@@ -125,9 +137,40 @@ rm -rf build
 
 ## 📌 注意事项
 
-- 程序启动时会自动加载 `books.txt` 中的数据
-- 退出时会自动保存数据到 `books.txt`
-- 请勿手动修改 `books.txt` 格式，否则可能导致读取失败
+- 程序启动时会自动创建 `library.db` 数据库文件
+- 数据自动持久化，无需手动保存
+- 删除图书时，如果该书已借出，会提示无法删除
+
+---
+
+## 🏷️ 版本标签
+
+本项目使用 Git Tag 管理版本：
+
+| 版本 | 说明 |
+|------|------|
+| `v1.0.0` | 初始版本：文件存储 + 面向过程 |
+| `v1.1.0` | OOP 重构：引入 Library 类 |
+| `v1.2.0` | SQLite 数据库集成 |
+
+### 查看所有标签
+
+```bash
+git tag -l
+```
+
+### 打标签
+
+```bash
+# 给当前 commit 打标签
+git tag v1.2.0
+
+# 给指定 commit 打标签
+git tag v1.1.0 c0ba576
+
+# 推送标签到远程仓库
+git push origin --tags
+```
 
 ---
 
