@@ -183,22 +183,7 @@ docs: 文档/注释更新
 style: 代码格式调整
 refactor: 重构（不改变功能）
 chore: 构建/工具配置
-
-
----
-
-## 📄 许可证
-
-MIT License
 ```
 
----
 
-## 🔨 替换你的 README
 
-```bash
-cd ~/code/library
-nano README.md
-```
-
-把上面的内容复制进去，保存退出。
