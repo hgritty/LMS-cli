@@ -5,28 +5,23 @@ using namespace std;
 
 int main() {
     Library library;
-    string filename = "../books.txt";
 
-    // 加载数据
-    library.loadFromFile(filename);
-
-    cout << "========================================" << endl;
-    cout << "     Library Management System    " << endl;
-    cout << "========================================" << endl;
+    cout << "========================================\n";
+    cout << "     Library Management System\n";
+    cout << "========================================\n";
 
     int choice;
 
-    while(true) {
-        cout << endl << "Menu:" << endl;
-        cout << "1. Add a book" << endl;
-        cout << "2. List all books" << endl;
-        cout << "3. Borrow a book" << endl;
-        cout << "4. Return a book" << endl;
-        cout << "5. Delete a book\n"; 
-        cout << "6. Exit" << endl;
-        cout << "Enter your choice(1-6): ";
-        
-        //只读取数字1，会把\n留在缓冲区里，所以下面需要先ignore
+    while (true) {
+        cout << "\nMenu:\n";
+        cout << "1. Add a book\n";
+        cout << "2. List all books\n";
+        cout << "3. Borrow a book\n";
+        cout << "4. Return a book\n";
+        cout << "5. Delete a book\n";
+        cout << "6. Exit\n";
+        cout << "Enter your choice (1-6): ";
+
         cin >> choice;
         cin.ignore();
 
@@ -37,6 +32,7 @@ int main() {
             cout << "Enter book author: ";
             getline(cin, author);
             library.addBook(title, author);
+
         } else if (choice == 2) {
             library.listBooks();
 
@@ -53,19 +49,20 @@ int main() {
             cin >> id;
             cin.ignore();
             library.returnBook(id);
+
         } else if (choice == 5) {
             int id;
             cout << "Enter book ID to delete: ";
             cin >> id;
             cin.ignore();
             library.deleteBook(id);
+
         } else if (choice == 6) {
-            library.saveToFile(filename);
-            cout << "Goodbye!" << endl;
+            cout << "Goodbye!\n";
             break;
 
         } else {
-            cout << "Invalid input! Please enter 1-5." << endl;
+            cout << "Invalid input! Please enter 1-6.\n";
         }
     }
 

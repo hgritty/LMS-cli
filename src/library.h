@@ -1,25 +1,25 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
-#include <vector>
 #include <string>
-#include "book.h"
+#include <sqlite3.h>
 
 class Library {
 private:
-    std::vector<Book> books;
     int nextId;
+    sqlite3* db;
 
 public:
     Library();
+    ~Library();
 
     void addBook(const std::string& title, const std::string& author);
     void listBooks() const;
     bool borrowBook(int id);
     bool returnBook(int id);
-    bool saveToFile(const std::string& filename)  const;
-    bool loadFromFile(const std::string& filename);
     bool deleteBook(int id);
+
+    bool initializeDatabase();
 };
 
 #endif

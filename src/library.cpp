@@ -1,189 +1,251 @@
 #include "library.h"
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <iomanip>
+#include <sqlite3.h>
 
 using namespace std;
 
-// 构造函数：初始化 nextId 为 1
-Library::Library() : nextId(1) {
+// 构造函数：打开数据库，初始化表
+Library::Library() : db(nullptr), nextId(1) {
+    // 打开数据库文件（如果不存在会自动创建）
+    int rc = sqlite3_open("../library.db", &db);
+    if (rc != SQLITE_OK) {
+        cerr << "Cannot open database: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+    initializeDatabase();
+}
 
+// 析构函数：关闭数据库
+Library::~Library() {
+    if (db) {
+        sqlite3_close(db);
+    }
+}
+
+// 初始化数据库：创建表
+bool Library::initializeDatabase() {
+    const char* sql = R"(
+        CREATE TABLE IF NOT EXISTS books (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            author TEXT NOT NULL,
+            borrowed INTEGER DEFAULT 0
+        );
+    )";
+
+    char* errMsg = nullptr;
+    int rc = sqlite3_exec(db, sql, nullptr, nullptr, &errMsg);
+    if (rc != SQLITE_OK) {
+        cerr << "SQL error: " << errMsg << endl;
+        sqlite3_free(errMsg);
+        return false;
+    }
+    
+    // 获取当前最大 id，用于 nextId
+    sqlite3_stmt* stmt;
+    const char* maxSql = "SELECT MAX(id) FROM books;";
+    rc = sqlite3_prepare_v2(db, maxSql, -1, &stmt, nullptr);
+    if (rc == SQLITE_OK && sqlite3_step(stmt) == SQLITE_ROW) {
+        nextId = sqlite3_column_int(stmt, 0) + 1;
+    }
+    sqlite3_finalize(stmt);
+    
+    return true;
 }
 
 // 添加图书
 void Library::addBook(const string& title, const string& author) {
-     // 1. 创建新书对象
-    Book newBook;
-    newBook.id = nextId;
-    nextId = nextId + 1;
-    newBook.title = title;
-    newBook.author = author;
-    newBook.borrowed = false;
+    const char* sql = "INSERT INTO books (title, author, borrowed) VALUES (?, ?, 0);";
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        cerr << "Prepare failed: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
     
-    // 2. 存入书架
-    books.push_back(newBook);
+    sqlite3_bind_text(stmt, 1, title.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, author.c_str(), -1, SQLITE_STATIC);
     
-    // 3. 提示用户（cout 在 main 里做，这里只返回信息）
-    cout << "Book added successfully! ID: " << newBook.id << endl;
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_DONE) {
+        int id = sqlite3_last_insert_rowid(db);
+        cout << "Book added successfully! ID: " << id << endl;
+        if (id >= nextId) nextId = id + 1;
+    } else {
+        cerr << "Insert failed: " << sqlite3_errmsg(db) << endl;
+    }
+    sqlite3_finalize(stmt);
 }
 
 // 列出所有图书
 void Library::listBooks() const {
-    if (books.empty()) {
-        cout << "Sorry, there is no book here." << endl;
-    } else {
-        // 设置对齐方式
-        cout << left;  // 左对齐
-        
-        // 表头
-        cout << "+----+---------------------+---------------------+----------+" << endl;
-        cout << "| ID | Title               | Author              | Status   |" << endl;
-        cout << "+----+---------------------+---------------------+----------+" << endl;
-        
-        // 数据行
-        for (const Book& b : books) {
-            string status = b.borrowed ? "Borrowed" : "Available";
-            
-            cout << "| ";
-            cout << setw(2) << b.id << " | ";
-            cout << setw(19) << b.title << " | ";
-            cout << setw(19) << b.author << " | ";
-            cout << setw(8) << status << " |" << endl;
-        }
-        
-        cout << "+----+---------------------+---------------------+----------+" << endl;
+    const char* sql = "SELECT id, title, author, borrowed FROM books ORDER BY id;";
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        std::cerr << "Prepare failed: " << sqlite3_errmsg(db) << std::endl;
+        return;
     }
+
+    // 表头
+    // printf("+----+---------------------------+---------------------------+----------+\n");
+    printf("| ID | Title                     | Author                    | Status     |\n");
+    // printf("+----+---------------------------+---------------------------+----------+\n");
+
+    bool hasData = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        hasData = true;
+        int id = sqlite3_column_int(stmt, 0);
+        const char* title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char* author = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        int borrowed = sqlite3_column_int(stmt, 3);
+
+        const char* status = borrowed ? "Borrowed" : "Available";
+        
+        // 用 printf 控制宽度（左对齐）
+        printf("| %2d | %-25s | %-25s | %-10s |\n", id, title, author, status);
+    }
+
+    if (!hasData) {
+        printf("| (empty)                                                 |\n");
+    }
+    // printf("+----+---------------------------+---------------------------+----------+\n");
+    sqlite3_finalize(stmt);
 }
 
 // 借阅图书
 bool Library::borrowBook(int id) {
-    // 边界检查
-    if (id < 1 || id >= nextId) {
-        cout << "Out of Index!" << endl;
+    // 先检查是否存在及状态
+    const char* checkSql = "SELECT borrowed FROM books WHERE id = ?;";
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, checkSql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        cerr << "Prepare failed: " << sqlite3_errmsg(db) << endl;
         return false;
     }
-
-    // 遍历查找
-    for (Book& b : books) {
-        if (b.id == id) {
-            if (b.borrowed == false) {
-                b.borrowed = true;
-                cout << "Book borrowed successfully!" << endl;
-                return true;
-            } else {
-                cout << "Book is already borrowed!" << endl;
-                return false;
-            }
-        }
+    sqlite3_bind_int(stmt, 1, id);
+    
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        cout << "Book not found!" << endl;
+        sqlite3_finalize(stmt);
+        return false;
     }
-
-    cout << "Book not found!" << endl;
+    
+    int borrowed = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    
+    if (borrowed) {
+        cout << "Book is already borrowed!" << endl;
+        return false;
+    }
+    
+    // 更新状态
+    const char* updateSql = "UPDATE books SET borrowed = 1 WHERE id = ?;";
+    rc = sqlite3_prepare_v2(db, updateSql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        cerr << "Prepare failed: " << sqlite3_errmsg(db) << endl;
+        return false;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+    
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if (rc == SQLITE_DONE) {
+        cout << "Book borrowed successfully!" << endl;
+        return true;
+    }
+    
+    cout << "Borrow failed!" << endl;
     return false;
 }
 
 // 归还图书
 bool Library::returnBook(int id) {
-    //边界检查
-    if (id < 1 || id >= nextId) {
-        cout << "Out of Index!" << endl;
+    const char* checkSql = "SELECT borrowed FROM books WHERE id = ?;";
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, checkSql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        cerr << "Prepare failed: " << sqlite3_errmsg(db) << endl;
         return false;
     }
-
-    //遍历查找
-    for (Book& b : books) {
-        if (b.id == id) {
-            if (b.borrowed == true) {
-                b.borrowed = false;
-                cout << "Book returned successfully!" << endl;
-                return true;
-            } else {
-                cout << "Book is already available (not borrowed)!" << endl;
-                return false;
-            }
-        }
+    sqlite3_bind_int(stmt, 1, id);
+    
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        cout << "Book not found!" << endl;
+        sqlite3_finalize(stmt);
+        return false;
     }
-
-    cout << "Book not found!" << endl;
+    
+    int borrowed = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    
+    if (!borrowed) {
+        cout << "Book is already available (not borrowed)!" << endl;
+        return false;
+    }
+    
+    const char* updateSql = "UPDATE books SET borrowed = 0 WHERE id = ?;";
+    rc = sqlite3_prepare_v2(db, updateSql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        cerr << "Prepare failed: " << sqlite3_errmsg(db) << endl;
+        return false;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+    
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if (rc == SQLITE_DONE) {
+        cout << "Book returned successfully!" << endl;
+        return true;
+    }
+    
+    cout << "Return failed!" << endl;
     return false;
 }
 
 // 删除图书
 bool Library::deleteBook(int id) {
-    // 边界检查
-    if (id < 1 || id >= nextId) {
-        cout << "Out of Index!" << endl;
+    const char* checkSql = "SELECT borrowed FROM books WHERE id = ?;";
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db, checkSql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        cerr << "Prepare failed: " << sqlite3_errmsg(db) << endl;
         return false;
     }
-
-    // 遍历查找
-    for (auto it = books.begin(); it != books.end(); ++it) {
-        if (it->id == id) {
-            // 检查是否已借出
-            if (it->borrowed == true) {
-                cout << "Cannot delete: book is currently borrowed!" << endl;
-                return false;
-            }
-            
-            books.erase(it);
-            cout << "Book deleted successfully!" << endl;
-            return true;
-        }
-    }
-
-    cout << "Book not found!" << endl;
-    return false;
-}
-
-// 保存数据到文件
-bool Library::saveToFile(const string& filename) const {
-    // 打开文件
-    ofstream file(filename);
-    if (!file) {
-        cerr << "Error: Cannot open file for writing!" << endl;
+    sqlite3_bind_int(stmt, 1, id);
+    
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        cout << "Book not found!" << endl;
+        sqlite3_finalize(stmt);
         return false;
     }
-
-    for (const Book& b : books) {
-        string content = to_string(b.id) + "|" + b.title + "|" + b.author + "|" + to_string(b.borrowed);
-        file << content << endl;
+    
+    int borrowed = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+    
+    if (borrowed) {
+        cout << "Cannot delete: book is currently borrowed!" << endl;
+        return false;
     }
-
-    return true;
-}
-
-// 从文件加载数据
-bool Library::loadFromFile(const string& filename) {
-    ifstream file(filename);
-    if (!file) {
-        // 文件不存在是正常情况（首次运行）
+    
+    const char* deleteSql = "DELETE FROM books WHERE id = ?;";
+    rc = sqlite3_prepare_v2(db, deleteSql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        cerr << "Prepare failed: " << sqlite3_errmsg(db) << endl;
+        return false;
+    }
+    sqlite3_bind_int(stmt, 1, id);
+    
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if (rc == SQLITE_DONE) {
+        cout << "Book deleted successfully!" << endl;
         return true;
     }
-
-    string line;
-    while (getline(file, line)) {
-        stringstream ss(line);
-        string idStr, title, author, statusStr;
-
-        getline(ss, idStr, '|');
-        getline(ss, title, '|');
-        getline(ss, author, '|');
-        getline(ss, statusStr, '|');
-
-        int id = stoi(idStr);
-        bool borrowed = stoi(statusStr);
-
-        Book b;
-        b.id = id;
-        b.title = title;
-        b.author = author;
-        b.borrowed = borrowed;
-        books.push_back(b);
-
-        if (id >= nextId) {
-            nextId = id + 1;
-        }
-    }
-
-    return true;
+    
+    cout << "Delete failed!" << endl;
+    return false;
 }
